@@ -1,0 +1,99 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{csquotes}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[top=1.8cm,bottom=1.8cm,left=2.0cm,right=2.0cm]{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{xurl}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=blue!60!black,urlcolor=blue!60!black]{hyperref}
+
+\usepackage[backend=biber,style=ieee,sorting=none]{biblatex}
+\addbibresource{referencias.bib}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3.5pt}
+\titlespacing*{\section}{0pt}{6pt}{3pt}
+\titlespacing*{\subsection}{0pt}{5pt}{2pt}
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.4em}{}
+
+\begin{document}
+
+% ==========================================================================
+% Carátula
+% ==========================================================================
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+    {\Large\bfseries UNIVERSIDAD TÉCNICA ESTATAL DE QUEVEDO \par}
+    \vspace{0.4cm}
+    {\large Facultad de Ciencias de la Ingeniería \par}
+    \vspace{0.3cm}
+    {\normalsize Carrera de Ingeniería en Software \par}
+
+    \vspace{2.5cm}
+    {\LARGE\bfseries FORM-IC-01: Investigación Individual\\[0.25cm]
+    Arquitecturas Distribuidas en la Industria \par}
+    \vspace{0.6cm}
+    {\large\itshape Caso de estudio: Plataforma de eventos StreamHub en Atlassian\\
+    bajo Arquitectura Orientada a Eventos (EDA) con Apache Kafka \par}
+
+    \vfill
+    \begin{flushleft}
+        \large
+        \textbf{Autor:} Heiner Ariel Zambrano Ronquillo\\[0.25cm]
+        \textbf{Correo institucional:} \texttt{hzambranor@uteq.edu.ec}\\[0.25cm]
+        \textbf{Asignatura:} Sistemas Distribuidos\\[0.25cm]
+        \textbf{Semana:} Semana 5 (23 al 29 de noviembre de 2026)
+    \end{flushleft}
+
+    \vspace{1.5cm}
+    {\normalsize Quevedo, Ecuador --- Noviembre de 2026 \par}
+\end{titlepage}
+
+% ==========================================================================
+% Análisis del caso (1 página)
+% ==========================================================================
+\section*{Análisis Industrial: Arquitectura Orientada a Eventos en Atlassian (StreamHub)}
+
+\subsection*{1. Descripción del caso y escala operativa}
+
+\subsection*{2. Elección del estilo arquitectónico y arquitectura previa}
+
+\subsection*{3. Beneficios obtenidos y resultados medibles}
+
+\subsection*{4. Desafíos encontrados y soluciones implementadas}
+
+\subsection*{5. Aplicación al Proyecto de Fin de Curso}
+
+\newpage
+
+% ==========================================================================
+% Evidencias de autoría
+% ==========================================================================
+\section*{Evidencias de Autoría}
+
+\subsection*{1. Fuente principal anotada}
+
+\subsection*{2. Sistema conocido de primera mano}
+
+\subsection*{3. Declaración de uso de inteligencia artificial}
+
+\newpage
+
+% ==========================================================================
+% Referencias bibliográficas (IEEE)
+% ==========================================================================
+\nocite{*}
+\printbibliography[title={Referencias}]
+
+\end{document}
