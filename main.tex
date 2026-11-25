@@ -1,4 +1,4 @@
-\documentclass[10pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -6,9 +6,8 @@
 \usepackage{csquotes}
 \usepackage{lmodern}
 \usepackage{microtype}
-\usepackage[top=1.65cm,bottom=1.65cm,left=1.9cm,right=1.9cm]{geometry}
+\usepackage[top=2.1cm,bottom=2.1cm,left=2.3cm,right=2.3cm]{geometry}
 \usepackage{titlesec}
-\usepackage{enumitem}
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{caption}
@@ -20,11 +19,9 @@
 \addbibresource{referencias.bib}
 
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{3.2pt}
+\setlength{\parskip}{4pt}
 \titlespacing*{\section}{0pt}{4pt}{3pt}
-\titlespacing*{\subsection}{0pt}{4.5pt}{1.5pt}
-\titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
-\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.4em}{}
+\titlespacing*{\subsection}{0pt}{5pt}{2pt}
 
 \begin{document}
 
@@ -61,54 +58,46 @@
 \end{titlepage}
 
 % ==========================================================================
-% Análisis del caso (1 página)
+% Análisis del caso (Exactamente 1 página: Página 2)
 % ==========================================================================
-\section*{Análisis Industrial: Arquitectura Orientada a Eventos en Atlassian (StreamHub)}
+\section*{Análisis del caso: Atlassian StreamHub (EDA)}
 
-\subsection*{1. Descripción del caso y escala operativa}
-Atlassian opera \textbf{StreamHub}, su plataforma central de transmisión de eventos en tiempo real que interconecta toda su suite empresarial (incluidos Jira y Confluence) transportando clics de interfaz, impresiones, invocaciones de API, eventos de captura de cambios de datos (CDC) y telemetría operativa \cite{kava2026streamhub}. El crecimiento de usuarios y la incorporación de analítica en vivo multiplicaron drásticamente la carga: el sistema pasó de gestionar 22\,000 millones de eventos diarios a ingerir y procesar \textbf{150\,000 millones de eventos por día}, entregando más de \textbf{225\,000 millones diarios} a los servicios suscriptores. En régimen continuo, el bus sostiene un promedio de \textbf{1,68 millones de eventos por segundo} con picos superiores a \textbf{3,2 millones de eventos por segundo} \cite{kava2026streamhub}.
+\subsection*{1. Descripción del caso y escala}
+Atlassian utiliza \textbf{StreamHub} como su plataforma central de eventos en tiempo real para conectar productos como Jira y Confluence, moviendo clics, llamadas a APIs, cambios de datos (CDC) y telemetría \cite{kava2026streamhub}. Con el crecimiento de usuarios, el sistema pasó de 22\,000 millones a \textbf{150\,000 millones de eventos procesados al día} y más de \textbf{225\,000 millones entregados diarios}, con un promedio de \textbf{1,68 millones de eventos/s} y picos mayores a \textbf{3,2 millones de eventos/s} \cite{kava2026streamhub}.
 
-\subsection*{2. Elección del estilo arquitectónico y arquitectura previa}
-Originalmente, la capa de ingesta corría sobre \textbf{Amazon Kinesis}, solución sin administración de servidores que funcionó bien hasta los 20\,000--30\,000 millones de eventos diarios \cite{kava2026streamhub}. Al quintuplicarse el tráfico surgieron cuatro límites críticos: la confiabilidad de la API quedó estancada cerca del 99,99\,\% por estrangulamiento (\textit{throttling}) en picos frente al objetivo de 99,999\,\%; el escalado por \textit{shards} (restringidos a 1\,MB/s de entrada y 2\,MB/s de salida) disparó la factura mensual de forma lineal; retener historial más allá de 24 horas para reprocesamiento ante fallos exigía complementos costosos cuando se buscaban 7 días; y varios grupos consumidores agotaban la salida compartida del \textit{shard} (o requerían pagar \textit{Enhanced Fan-Out}) bajo acuerdos de nivel de servicio (SLO) menores a 2\,s en entrega local y 3\,s entre regiones. Atlassian consolidó entonces una arquitectura orientada a eventos sobre \textbf{Apache Kafka gestionado (AWS MSK)}, aprovechando su modelo de registro particionado para lectura independiente de múltiples suscriptores \cite{raptis2023kafka} y alto rendimiento de serialización y transporte \cite{jackson2024streaming}, sin dedicar su reducido equipo de plataforma a mantener nodos base ni ZooKeeper.
+\subsection*{2. Por qué eligieron este estilo y qué tenían antes}
+Antes usaban \textbf{Amazon Kinesis}, que funcionó bien hasta los 20\,000--30\,000 millones de eventos diarios \cite{kava2026streamhub}. Al multiplicarse por cinco el tráfico tuvieron cuatro problemas: el \textit{throttling} en picos limitaba la disponibilidad al 99,99\,\% (buscaban 99,999\,\%); pagar miles de \textit{shards} (de 1\,MB/s de entrada y 2\,MB/s de salida) subía la factura de forma lineal; guardar datos más de 24 horas resultaba muy caro cuando necesitaban 7 días para reprocesamiento; y varios consumidores competían por la salida del mismo \textit{shard} con metas de entrega menores a 2\,s local y 3\,s entre regiones. Por eso pasaron a una arquitectura orientada a eventos sobre \textbf{Apache Kafka gestionado (AWS MSK)}, que permite múltiples grupos consumidores independientes \cite{raptis2023kafka} y alto rendimiento de transmisión \cite{jackson2024streaming} sin administrar servidores manualmente.
 
-\subsection*{3. Beneficios obtenidos y resultados medibles}
-El cambio arquitectónico más rentable dentro de AWS MSK fue separar cómputo y almacenamiento mediante \textbf{Kafka Tiered Storage} en dos niveles \cite{kava2026streamhub}. El Nivel 1 conserva en discos locales EBS únicamente los últimos \textbf{5 minutos} de eventos ``calientes'' para que los consumidores en tiempo real lean con latencia mínima; el Nivel 2 descarga de forma asíncrona los segmentos cerrados hacia \textbf{Amazon S3} con retención de \textbf{7 días}. Aunque leer desde S3 añade algunos cientos de milisegundos, esa diferencia resulta irrelevante para procesos que ya acumulan más de 5 minutos de retraso. Con este diseño eliminaron el sobreaprovisionamiento de volúmenes EBS para el peor escenario, redujeron de manera sustancial el gasto de infraestructura y aislaron las lecturas históricas masivas (\textit{backfills}) para no restar IOPS al tráfico en vivo, sosteniendo picos mayores a 3,2 millones de eventos/s \cite{kava2026streamhub}.
+\subsection*{3. Beneficios obtenidos}
+La mejora principal en AWS MSK fue activar \textbf{Kafka Tiered Storage} en dos capas \cite{kava2026streamhub}: los discos locales EBS solo guardan los últimos \textbf{5 minutos} de eventos recientes para lectura rápida, mientras que el historial de \textbf{7 días} pasa de forma asíncrona a \textbf{Amazon S3} (sumando solo unos cientos de milisegundos si un consumidor va atrasado). Con esto bajaron de forma importante el costo en discos EBS, aislaron las lecturas históricas pesadas sin quitarle IOPS a los consumidores en vivo y lograron sostener más de 3,2 millones de eventos/s \cite{kava2026streamhub}.
 
-\subsection*{4. Desafíos encontrados y soluciones implementadas}
-Operar a 150\,000 millones de eventos diarios expuso cuellos de botella severos \cite{kava2026streamhub}. Primero, ciertos brokers saturaban sus topes de red y EBS antes que la CPU debido a la amplificación entre replicación, \textit{fan-out} y copia hacia S3, reflejando el problema clásico de desbalance de carga en redes \textit{pub-sub} multi-broker \cite{sharma2024broker}. Segundo, tras subir temporalmente la retención de 7 a 21 días y regresarla a 7 días, una tormenta de borrados en S3 frenó la copia remota y llenó los discos locales; además, ampliar disco en MSK es irreversible, impone ventanas de enfriamiento (\textit{cooldowns}) y actualizar instancias toma $\sim$15 minutos por broker. Tercero, la falla de una zona de disponibilidad degradó el plano de control gestionado e impidió ejecutar cambios de emergencia. Atlassian resolvió estos frentes planificando capacidad según el broker más caliente (\texttt{BytesIn}, \texttt{BytesOut}, retraso de copia remota), aplicando límites de tasa y \textbf{cuarentena} en la API antes de tocar Kafka, fijando cuotas de cliente (p.~ej., 50\,MB/s a productores y 100\,MB/s a consumidores), fragmentando clústeres con conmutación en \textbf{$\sim$15 minutos} (o clúster limpio paralelo en $\sim$2 horas vía infraestructura como código) y definiendo \textbf{regiones compañeras} compatibles con residencia de datos \cite{kava2026streamhub}.
+\subsection*{4. Desafíos encontrados y cómo los resolvieron}
+A esa escala aparecieron fallos nuevos \cite{kava2026streamhub}: algunos brokers saturaban su red antes que la CPU por desbalance de particiones \cite{sharma2024broker}; al bajar una retención temporal de 21 a 7 días provocaron una ola de borrados en S3 que frenó las copias y llenó los discos locales; y una caída de zona en AWS bloqueó el plano de control impidiendo escalar de emergencia. Lo solucionaron dimensionando según el broker más cargado, poniendo límites de tasa y cuarentena en la API, aplicando cuotas por cliente en Kafka (50\,MB/s en escritura y 100\,MB/s en lectura) y dividiendo clústeres para desviar tráfico en $\sim$15 minutos \cite{kava2026streamhub}.
 
-\subsection*{5. Aplicación al Proyecto de Fin de Curso (Bolsa de Empleo Web)}
-Nuestro PFC (\textit{Bolsa de Empleo Web UTEQ}) está construido como monolito modular en \textbf{Spring Boot (Java 17)} con \textbf{PostgreSQL multi-esquema} (\texttt{usuarios}, \texttt{empresas}, \texttt{ofertas}, \texttt{postulaciones}, \texttt{catalogos}, \texttt{seguridad}), \textbf{Caffeine Cache}, notificaciones por \textbf{WebSockets (STOMP/SockJS)} e integración con \textbf{Google Gemini} (\texttt{GeminiAiService}). De StreamHub \textbf{sí adoptaríamos} el desacoplamiento asíncrono de eventos junto con control de tasa y cuarentena de mensajes fallidos: hoy, cuando un postulante aplica o una empresa actualiza el estado de selección, ejecutar en el mismo hilo HTTP la evaluación semántica CV--vacante contra la API externa de Gemini, la generación documental (\texttt{PDFBox}/\texttt{iText}), la auditoría en \texttt{seguridad} y el aviso STOMP expone al usuario a bloqueos por latencia o cuotas externas. En cambio, \textbf{descartamos} desplegar Apache Kafka (MSK), almacenamiento por niveles en S3 o clústeres espejo: esa infraestructura responde a cientos de miles de millones de eventos diarios y en una bolsa de empleo institucional solo añadiría sobrecosto y carga operativa; el mismo patrón EDA se cubre limpiamente con eventos transaccionales internos de Spring (\texttt{@TransactionalEventListener}) o una tabla \textit{Outbox} sobre PostgreSQL.
+\subsection*{5. Aplicación al Proyecto de Fin de Curso}
+En nuestro PFC (\textit{Bolsa de Empleo Web}, hecho en Spring Boot con PostgreSQL multi-esquema, WebSockets STOMP y Google Gemini) \textbf{sí tomaríamos} desacoplar por eventos las tareas lentas cuando alguien postula o cambia un estado: llamar a \texttt{GeminiAiService} para evaluar el CV, generar PDFs y enviar avisos STOMP en segundo plano evita bloquear la petición HTTP si la API externa tarda. En cambio, \textbf{no usaríamos} Apache Kafka ni S3 porque mantener un clúster así es innecesario y costoso para el volumen de una bolsa de empleo universitaria; en nuestro caso basta con eventos internos de Spring (\texttt{@TransactionalEventListener}) sobre el mismo PostgreSQL.
 
 \newpage
 
 % ==========================================================================
-% Evidencias de autoría
+% Evidencias de autoría y Referencias (Página 3)
 % ==========================================================================
-\section*{Evidencias de Autoría}
+\section*{Evidencias de autoría}
 
-\subsection*{1. Fuente principal anotada}
+\subsection*{1. Captura anotada de la fuente principal}
 \begin{figure}[H]
     \centering
-    \IfFileExists{capturas/fuente_streamhub_anotada.png}{%
-        \includegraphics[width=0.92\textwidth]{capturas/fuente_streamhub_anotada.png}%
-    }{%
-        \fbox{\parbox{0.92\textwidth}{\centering\vspace{1.2cm}
-        \textit{Archivo de imagen esperado: \texttt{capturas/fuente\_streamhub\_anotada.png}}
-        \vspace{1.2cm}}}%
-    }
-    \caption{Fragmentos subrayados y anotados sobre la fuente técnica oficial del caso StreamHub en Atlassian \cite{kava2026streamhub}.}
+    \includegraphics[width=0.86\textwidth]{capturas/fuente_streamhub_anotada.png}
+    \caption{Captura del blog oficial de Atlassian con subrayados y apuntes sobre la escala y migración de StreamHub \cite{kava2026streamhub}.}
 \end{figure}
 
-\subsection*{2. Sistema conocido de primera mano}
+\subsection*{2. Ejemplo de sistema conocido de primera mano}
+Reconozco este mismo estilo en las notificaciones por \textbf{WebSockets (STOMP)} de nuestra \textit{Bolsa de Empleo Web} y en sus flujos de \textbf{GitHub Actions}: cuando una empresa actualiza el estado de una postulación (o hacemos \texttt{git push}), se publica un evento que dispara avisos al candidato o ejecuta el despliegue hacia Azure en segundo plano sin dejar esperando al proceso principal.
 
 \subsection*{3. Declaración de uso de inteligencia artificial}
+Se usó IA generativa (Google Gemini) como apoyo para buscar artículos IEEE recientes con DOI, configurar la plantilla \LaTeX{} con \texttt{biblatex-ieee} y revisar ortografía y síntesis del texto. El análisis respecto a nuestro PFC y la verificación manual de cada DOI (autores, año, título, revista, volumen y páginas) fueron validados por el autor.
 
-\newpage
-
-% ==========================================================================
-% Referencias bibliográficas (IEEE)
-% ==========================================================================
+\vspace{0.2cm}
 \printbibliography[title={Referencias}]
 
 \end{document}
