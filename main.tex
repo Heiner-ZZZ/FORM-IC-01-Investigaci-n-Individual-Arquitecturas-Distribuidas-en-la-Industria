@@ -6,7 +6,7 @@
 \usepackage{csquotes}
 \usepackage{lmodern}
 \usepackage{microtype}
-\usepackage[top=1.8cm,bottom=1.8cm,left=2.0cm,right=2.0cm]{geometry}
+\usepackage[top=1.65cm,bottom=1.65cm,left=1.9cm,right=1.9cm]{geometry}
 \usepackage{titlesec}
 \usepackage{enumitem}
 \usepackage{graphicx}
@@ -20,9 +20,9 @@
 \addbibresource{referencias.bib}
 
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{3.5pt}
-\titlespacing*{\section}{0pt}{6pt}{3pt}
-\titlespacing*{\subsection}{0pt}{5pt}{2pt}
+\setlength{\parskip}{3.2pt}
+\titlespacing*{\section}{0pt}{4pt}{3pt}
+\titlespacing*{\subsection}{0pt}{4.5pt}{1.5pt}
 \titleformat{\section}{\large\bfseries}{\thesection.}{0.5em}{}
 \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.4em}{}
 
@@ -66,8 +66,10 @@
 \section*{Análisis Industrial: Arquitectura Orientada a Eventos en Atlassian (StreamHub)}
 
 \subsection*{1. Descripción del caso y escala operativa}
+Atlassian opera \textbf{StreamHub}, su plataforma central de transmisión de eventos en tiempo real que interconecta toda su suite empresarial (incluidos Jira y Confluence) transportando clics de interfaz, impresiones, invocaciones de API, eventos de captura de cambios de datos (CDC) y telemetría operativa \cite{kava2026streamhub}. El crecimiento de usuarios y la incorporación de analítica en vivo multiplicaron drásticamente la carga: el sistema pasó de gestionar 22\,000 millones de eventos diarios a ingerir y procesar \textbf{150\,000 millones de eventos por día}, entregando más de \textbf{225\,000 millones diarios} a los servicios suscriptores. En régimen continuo, el bus sostiene un promedio de \textbf{1,68 millones de eventos por segundo} con picos superiores a \textbf{3,2 millones de eventos por segundo} \cite{kava2026streamhub}.
 
 \subsection*{2. Elección del estilo arquitectónico y arquitectura previa}
+Originalmente, la capa de ingesta corría sobre \textbf{Amazon Kinesis}, solución sin administración de servidores que funcionó bien hasta los 20\,000--30\,000 millones de eventos diarios \cite{kava2026streamhub}. Al quintuplicarse el tráfico surgieron cuatro límites críticos: la confiabilidad de la API quedó estancada cerca del 99,99\,\% por estrangulamiento (\textit{throttling}) en picos frente al objetivo de 99,999\,\%; el escalado por \textit{shards} (restringidos a 1\,MB/s de entrada y 2\,MB/s de salida) disparó la factura mensual de forma lineal; retener historial más allá de 24 horas para reprocesamiento ante fallos exigía complementos costosos cuando se buscaban 7 días; y varios grupos consumidores agotaban la salida compartida del \textit{shard} (o requerían pagar \textit{Enhanced Fan-Out}) bajo acuerdos de nivel de servicio (SLO) menores a 2\,s en entrega local y 3\,s entre regiones. Atlassian consolidó entonces una arquitectura orientada a eventos sobre \textbf{Apache Kafka gestionado (AWS MSK)}, aprovechando su modelo de registro particionado para lectura independiente de múltiples suscriptores \cite{raptis2023kafka} y alto rendimiento de serialización y transporte \cite{jackson2024streaming}, sin dedicar su reducido equipo de plataforma a mantener nodos base ni ZooKeeper.
 
 \subsection*{3. Beneficios obtenidos y resultados medibles}
 
